@@ -10,7 +10,6 @@ class CrosswordGenerator
         $grid = array_fill(0, $size, array_fill(0, $size, null));
         $placed = [];
 
-        // word pertama
         $first = strtoupper($words[0]['word']);
         $row = 7;
         $col = 3;
@@ -27,7 +26,6 @@ class CrosswordGenerator
             'direction' => 'across'
         ];
 
-        // word berikutnya
         foreach (array_slice($words, 1) as $w) {
             $word = strtoupper($w['word']);
             $done = false;
@@ -35,13 +33,14 @@ class CrosswordGenerator
             foreach ($placed as $p) {
                 for ($i = 0; $i < strlen($word); $i++) {
                     for ($j = 0; $j < strlen($p['word']); $j++) {
-                        if ($word[$i] == $p['word'][$j]) {
-                            // tempel silang
-                            if ($p['direction'] == 'across') {
+                        if ($word[$i] === $p['word'][$j]) {
+                            if ($p['direction'] === 'across') {
                                 $r = $p['row'] - $i;
                                 $c = $p['col'] + $j;
-                                if ($this->canPlaceVertikal($grid, $word, $r, $c)) {
-                                    $this->placeVertikal($grid, $word, $r, $c);
+
+                                if ($this->canPlaceVertical($grid, $word, $r, $c)) {
+                                    $this->placeVertical($grid, $word, $r, $c);
+
                                     $placed[] = [
                                         'word' => $word,
                                         'clue' => $w['clue'],
@@ -58,6 +57,23 @@ class CrosswordGenerator
                 }
             }
         }
+
         return ['grid' => $grid, 'words' => $placed];
+    }
+
+    private function canPlaceVertical($grid, $word, $row, $col)
+    {
+        for ($i = 0; $i < strlen($word); $i++) {
+            if (!isset($grid[$row + $i][$col])) return false;
+            if ($grid[$row + $i][$col] !== null && $grid[$row + $i][$col] !== $word[$i]) return false;
+        }
+        return true;
+    }
+
+    private function placeVertical(&$grid, $word, $row, $col)
+    {
+        for ($i = 0; $i < strlen($word); $i++) {
+            $grid[$row + $i][$col] = $word[$i];
+        }
     }
 }
