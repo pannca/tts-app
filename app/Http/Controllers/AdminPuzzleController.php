@@ -26,7 +26,7 @@ class AdminPuzzleController extends Controller
     {
         $request->validate([
             'title' => 'required',
-            'words' => 'required|array|min:8',
+            'words' => 'required|array|min:10',
         ]);
 
         $generator = new CrosswordGenerator();

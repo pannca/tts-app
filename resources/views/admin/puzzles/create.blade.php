@@ -262,8 +262,8 @@
                             <div class="word-card">
                                 <div class="word-header">Word #{{ $i + 1 }}</div>
                                 <div class="word-inputs">
-                                    <input type="text" name="words[{{ $i }}][word]" placeholder="Word">
-                                    <input type="text" name="words[{{ $i }}][clue]" placeholder="Clue">
+                                    <input type="text" name="words[{{ $i }}][word]" placeholder="Word" required>
+                                    <input type="text" name="words[{{ $i }}][clue]" placeholder="Clue" required>
                                 </div>
                             </div>
                         @endfor
