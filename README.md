@@ -100,6 +100,7 @@ app/
 resources/
 ├── js/Pages/Play.vue        # Game interface
 ├── views/admin/             # Admin pages
+├── views/user/              # Player pages
 └── views/auth/              # Login/register
 ```
 
