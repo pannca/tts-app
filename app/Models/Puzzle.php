@@ -14,4 +14,9 @@ class Puzzle extends Model
         'grid',
         'words',
     ];
+
+    protected $casts = [
+        'grid' => 'array',
+        'words' => 'array',
+    ];
 }

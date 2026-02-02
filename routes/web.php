@@ -1,35 +1,55 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use App\Http\Controllers\PuzzleController;
+use Illuminate\Support\Facades\Route;
 
+
+// Halaman utama redirect ke login
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return view('auth.login');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
+// AUTHENTICATED ROUTES (Untuk semua user yang login)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // USER ROUTES (Player Puzzle)
+    Route::prefix('dashboard')->name('user.')->group(function () {
+        Route::get('/', [PuzzleController::class, 'index'])->name('dashboard');
+        Route::get('/play/{id}', [PuzzleController::class, 'play'])->name('play');
+    });
+
+
+    // ADMIN ROUTES (Management Puzzle)
+    Route::prefix('admin')->name('admin.')->group(function () {
+        // Dashboard Admin
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+
+        // CRUD Puzzles
+        Route::prefix('puzzles')->name('puzzles.')->group(function () {
+            // List semua puzzle
+            Route::get('/', [PuzzleController::class, 'indexAdmin'])->name('index');
+
+            // Form create puzzle
+            Route::get('/create', [PuzzleController::class, 'create'])->name('create');
+
+            // Store puzzle baru
+            Route::post('/', [PuzzleController::class, 'store'])->name('store');
+
+            // Delete puzzle
+            Route::delete('/{id}', [PuzzleController::class, 'destroy'])->name('destroy');
+        });
+    });
+
 });
 
-// Puzzle Routes
-Route::get('/play/{id}', function ($id) {
-    return Inertia::render('Play', [
-        'id' => $id
-    ]);
-});
+// LOGOUT ROUTE (Terpisah untuk akses mudah)
+Route::get('/logout', function () {
+    auth()->logout();
+    return redirect()->route('login');
+})->name('logout');
 
-require __DIR__.'/auth.php';
+// AUTH ROUTES (Register, Login, Password Reset, dll)
+require __DIR__ . '/auth.php';
