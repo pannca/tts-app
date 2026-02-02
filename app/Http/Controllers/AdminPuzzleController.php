@@ -7,13 +7,12 @@ use Illuminate\Http\Request;
 use App\Services\CrosswordGenerator;
 use Inertia\Inertia;
 
-class PuzzleController extends Controller
+class AdminPuzzleController extends Controller
 {
-    // USER DASHBOARD
     public function index()
     {
         $puzzles = Puzzle::all();
-        return view('user.dashboard', compact('puzzles'));
+        return view('admin.puzzles.index', compact('puzzles'));
     }
 
     // FORM CREATE (ADMIN)
@@ -27,7 +26,7 @@ class PuzzleController extends Controller
     {
         $request->validate([
             'title' => 'required',
-            'words' => 'required|array|min:5',
+            'words' => 'required|array|min:8',
         ]);
 
         $generator = new CrosswordGenerator();
@@ -53,10 +52,6 @@ class PuzzleController extends Controller
         ]);
     }
 
-    public function indexAdmin() {
-        $puzzles = Puzzle::all();
-        return view('admin.puzzles.index', compact('puzzles'));
-    }
 
     public function destroy($id)
     {

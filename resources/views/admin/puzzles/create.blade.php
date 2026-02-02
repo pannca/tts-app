@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,7 +29,7 @@
             background: white;
             padding: 20px 24px;
             border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
@@ -74,7 +75,7 @@
             background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         /* Form Group */
@@ -218,6 +219,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -225,14 +227,24 @@
             <a href="{{ route('admin.dashboard') }}" class="back-btn">← Back</a>
         </div>
 
-        @if(session('success'))
-            <div class="alert-success">
-                ✓ {{ session('success') }}
+        @if (session('success'))
+            <div class="bg-green-100 text-green-700 p-3 rounded mb-4">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>⚠ {{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
         <div class="form-card">
-            <form action="/admin/puzzles" method="POST">
+            <form action="{{ route('admin.puzzles.store') }}" method="POST">
                 @csrf
 
                 <div class="form-group">
@@ -246,12 +258,12 @@
                     <h3 class="words-title">Minimal isi 5 item kalo lebih juga boleh</h3>
 
                     <div class="words-grid">
-                        @for($i=0; $i<10; $i++)
+                        @for ($i = 0; $i < 10; $i++)
                             <div class="word-card">
-                                <div class="word-header">Word #{{ $i+1 }}</div>
+                                <div class="word-header">Word #{{ $i + 1 }}</div>
                                 <div class="word-inputs">
-                                    <input type="text" name="words[{{$i}}][word]" placeholder="Word">
-                                    <input type="text" name="words[{{$i}}][clue]" placeholder="Clue">
+                                    <input type="text" name="words[{{ $i }}][word]" placeholder="Word">
+                                    <input type="text" name="words[{{ $i }}][clue]" placeholder="Clue">
                                 </div>
                             </div>
                         @endfor
@@ -263,4 +275,5 @@
         </div>
     </div>
 </body>
+
 </html>

@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PuzzleController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PlayerPuzzleController;
+use App\Http\Controllers\AdminPuzzleController;
 
 
 // Halaman utama redirect ke login
@@ -15,8 +16,8 @@ Route::middleware('auth')->group(function () {
 
     // USER ROUTES (Player Puzzle)
     Route::prefix('dashboard')->name('user.')->group(function () {
-        Route::get('/', [PuzzleController::class, 'index'])->name('dashboard');
-        Route::get('/play/{id}', [PuzzleController::class, 'play'])->name('play');
+        Route::get('/', [PlayerPuzzleController::class, 'index'])->name('dashboard');
+        Route::get('/play/{id}', [PlayerPuzzleController::class, 'play'])->name('play');
     });
 
 
@@ -30,19 +31,15 @@ Route::middleware('auth')->group(function () {
         // CRUD Puzzles
         Route::prefix('puzzles')->name('puzzles.')->group(function () {
             // List semua puzzle
-            Route::get('/', [PuzzleController::class, 'indexAdmin'])->name('index');
-
+            Route::get('/', [AdminPuzzleController::class, 'index'])->name('index');
             // Form create puzzle
-            Route::get('/create', [PuzzleController::class, 'create'])->name('create');
-
+            Route::get('/create', [AdminPuzzleController::class, 'create'])->name('create');
             // Store puzzle baru
-            Route::post('/', [PuzzleController::class, 'store'])->name('store');
-
+            Route::post('/', [AdminPuzzleController::class, 'store'])->name('store');
             // Delete puzzle
-            Route::delete('/{id}', [PuzzleController::class, 'destroy'])->name('destroy');
+            Route::delete('/{id}', [AdminPuzzleController::class, 'destroy'])->name('destroy');
         });
     });
-
 });
 
 // LOGOUT ROUTE (Terpisah untuk akses mudah)
