@@ -255,7 +255,7 @@
                 <hr class="divider">
 
                 <div>
-                    <h3 class="words-title">Minimal isi 5 item kalo lebih juga boleh</h3>
+                    <h3 class="words-title">Minimal isi 10 item kalo lebih juga boleh</h3>
 
                     <div class="words-grid">
                         @for ($i = 0; $i < 10; $i++)
