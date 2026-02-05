@@ -67,13 +67,15 @@
 
         <!-- Form Actions -->
         <div class="form-actions">
-            <a class="login-link" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
+            <div class="actions-wrapper">
+                <a class="login-link" href="{{ route('login') }}">
+                    {{ __('Already registered?') }}
+                </a>
 
-            <x-primary-button class="register-button">
-                {{ __('Register') }}
-            </x-primary-button>
+                <x-primary-button class="register-button">
+                    {{ __('Register') }}
+                </x-primary-button>
+            </div>
         </div>
     </form>
 
@@ -126,6 +128,7 @@
             top: 50%;
             transform: translateY(-50%);
             color: #a0aec0;
+            z-index: 10;
         }
 
         .input-wrapper input {
@@ -135,21 +138,27 @@
             border-radius: 8px;
             font-size: 15px;
             color: #2d3748;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
             background: #f8fafc;
+            box-sizing: border-box;
         }
 
         .input-wrapper input:focus {
             outline: none;
             border-color: #4299e1;
             background: white;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
         }
 
         .form-actions {
+            margin-top: 32px;
+        }
+
+        .actions-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 32px;
+            gap: 16px;
         }
 
         .login-link {
@@ -157,6 +166,8 @@
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
+            white-space: nowrap;
+            padding: 8px 4px;
         }
 
         .login-link:hover {
@@ -172,11 +183,15 @@
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            min-width: 120px;
+            text-align: center;
         }
 
         .register-button:hover {
             background: #3182ce;
+            transform: translateY(-1px);
         }
 
         /* Error messages styling */
@@ -187,28 +202,124 @@
         .mt-2 span {
             color: #e53e3e;
             font-size: 13px;
+            display: block;
+            margin-top: 4px;
         }
 
-        /* Responsive */
-        @media (max-width: 480px) {
+        /* Responsive Design */
+        @media (max-width: 768px) {
             .register-form {
-                padding: 30px 20px;
-                margin: 20px;
+                padding: 32px 24px;
+                margin: 20px 16px;
+                max-width: 100%;
             }
 
-            .form-actions {
+            .form-title {
+                font-size: 24px;
+            }
+
+            .actions-wrapper {
+                gap: 12px;
+            }
+
+            .register-button {
+                padding: 12px 24px;
+                min-width: 100px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .register-form {
+                padding: 28px 20px;
+                margin: 16px 12px;
+            }
+
+            .form-title {
+                font-size: 22px;
+            }
+
+            .input-wrapper input {
+                padding: 12px 16px 12px 44px;
+                font-size: 14px;
+            }
+
+            .input-icon {
+                width: 18px;
+                height: 18px;
+                left: 14px;
+            }
+
+            .actions-wrapper {
                 flex-direction: column;
-                gap: 16px;
                 align-items: stretch;
+                gap: 20px;
             }
 
             .login-link {
                 text-align: center;
                 order: 2;
+                padding: 10px 0;
             }
 
             .register-button {
                 order: 1;
+                width: 100%;
+                padding: 14px 28px;
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .register-form {
+                padding: 24px 16px;
+                margin: 12px 8px;
+                border-radius: 10px;
+            }
+
+            .form-header {
+                margin-bottom: 28px;
+            }
+
+            .form-title {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+
+            .form-subtitle {
+                font-size: 13px;
+            }
+
+            .input-group {
+                margin-bottom: 20px;
+            }
+
+            .input-group label {
+                font-size: 13px;
+            }
+
+            .actions-wrapper {
+                gap: 16px;
+            }
+
+            .login-link {
+                font-size: 13px;
+            }
+        }
+
+        /* For very small screens */
+        @media (max-width: 360px) {
+            .register-form {
+                padding: 20px 14px;
+                margin: 8px 6px;
+            }
+
+            .form-title {
+                font-size: 18px;
+            }
+
+            .register-button {
+                padding: 12px 20px;
+                font-size: 14px;
             }
         }
     </style>

@@ -16,7 +16,7 @@ Route::middleware('auth')->group(function () {
 
     // USER ROUTES (Player Puzzle)
     Route::prefix('dashboard')->name('user.')->group(function () {
-        Route::get('/', [PlayerPuzzleController::class, 'index'])->name('dashboard');
+        Route::get('/user/dashboard', [PlayerPuzzleController::class, 'index'])->name('dashboard');
         Route::get('/play/{id}', [PlayerPuzzleController::class, 'play'])->name('play');
     });
 
