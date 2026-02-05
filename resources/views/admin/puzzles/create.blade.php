@@ -249,21 +249,24 @@
 
                 <div class="form-group">
                     <label for="title">Judul Puzzle</label>
-                    <input type="text" id="title" name="title" placeholder="Masukkan judul puzzle" required>
+                    <input type="text" id="title" name="title" placeholder="Masukkan judul puzzle"
+                        value="{{ old('title') }}" required>
                 </div>
 
                 <hr class="divider">
 
                 <div>
-                    <h3 class="words-title">Minimal isi 10 item kalo lebih juga boleh</h3>
+                    <h3 class="words-title">Isi Kata-Kata dan Clue</h3>
 
                     <div class="words-grid">
                         @for ($i = 0; $i < 10; $i++)
                             <div class="word-card">
                                 <div class="word-header">Word #{{ $i + 1 }}</div>
                                 <div class="word-inputs">
-                                    <input type="text" name="words[{{ $i }}][word]" placeholder="Word" required>
-                                    <input type="text" name="words[{{ $i }}][clue]" placeholder="Clue" required>
+                                    <input type="text" name="words[{{ $i }}][word]"
+                                        value="{{ old('words.' . $i . '.word') }}" placeholder="Word" required>
+                                    <input type="text" name="words[{{ $i }}][clue]"
+                                        value="{{ old('words.' . $i . '.clue') }}" placeholder="Clue" required>
                                 </div>
                             </div>
                         @endfor

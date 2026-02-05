@@ -26,11 +26,17 @@ class AdminPuzzleController extends Controller
     {
         $request->validate([
             'title' => 'required',
-            'words' => 'required|array|min:10',
+            'words' => 'required|array',
         ]);
 
         $generator = new CrosswordGenerator();
         $result = $generator->generate($request->words);
+        
+        if (!$result || count($result['words']) < count($request->words)) {
+            return back()
+                ->withInput()
+                ->withErrors(['words' => 'Beberapa kata tidak bisa disusun menjadi TTS. Coba ganti kata atau jumlahnya.']);
+        }
 
         Puzzle::create([
             'title' => $request->title,

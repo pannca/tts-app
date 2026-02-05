@@ -5,7 +5,7 @@ const props = defineProps({
     puzzle: Object
 })
 
-// Data utama
+// Grid & clue
 const grid = ref([])
 const words = ref([])
 const userGrid = ref([])
@@ -26,38 +26,38 @@ const isFinished = computed(() => {
     return true
 })
 
-// Redirect ke dashboard jika permainan selesai
-watch(isFinished, (val) => {
+// Redirect ke dashboard jika selesai
+watch(isFinished, val => {
     if (val) {
         setTimeout(() => {
-            window.location.href = '/dashboard'
+            window.history.back()
         }, 2000)
     }
 })
 
+// Inisialisasi grid & clue
 onMounted(() => {
-    if (!props.puzzle) return
+    if (!props.puzzle || !props.puzzle.grid || !props.puzzle.words) return
 
-    grid.value = JSON.parse(props.puzzle.grid)
-    words.value = JSON.parse(props.puzzle.words)
+    try {
+        grid.value = JSON.parse(props.puzzle.grid)
+        words.value = JSON.parse(props.puzzle.words)
+    } catch (err) {
+        console.error('Error parsing puzzle data', err)
+        return
+    }
 
     initializeUserGrid()
 })
 
-// Inisialisasi grid user
+// Inisialisasi grid user (input kosong)
 function initializeUserGrid() {
     userGrid.value = grid.value.map(row =>
-        row.map(cell => cell ? '' : null)
+        row.map(cell => (cell ? '' : null))
     )
 }
 
-// Cek jawaban benar
-function isCorrect(r, c) {
-    if (!grid.value[r][c] || !userGrid.value[r][c]) return false
-    return userGrid.value[r][c].toUpperCase() === grid.value[r][c]
-}
-
-// Nomor sel
+// Dapatkan nomor sel untuk clue
 function getCellNumber(r, c) {
     if (!grid.value[r][c]) return null
 
@@ -96,10 +96,9 @@ function getCellNumber(r, c) {
     return null
 }
 
-// Keyboard
+// Keyboard navigation
 function handleKeyDown(e, r, c) {
     const key = e.key
-
     if (key === 'ArrowRight') moveToCell(r, c + 1)
     if (key === 'ArrowLeft') moveToCell(r, c - 1)
     if (key === 'ArrowDown') moveToCell(r + 1, c)
@@ -108,19 +107,17 @@ function handleKeyDown(e, r, c) {
         e.preventDefault()
         moveToNextCell(r, c)
     }
-
     activeCell.value = { row: r, col: c }
 }
 
 function moveToCell(r, c) {
     if (!grid.value[r] || !grid.value[r][c]) return
-
     focusCell(r, c)
 }
 
 function moveToNextCell(r, c) {
-    let newC = c + 1
     let newR = r
+    let newC = c + 1
 
     while (newR < grid.value.length) {
         while (newC < grid.value[newR].length) {
@@ -133,7 +130,6 @@ function moveToNextCell(r, c) {
         newR++
         newC = 0
     }
-
     focusCell(0, 0)
 }
 
@@ -164,8 +160,57 @@ function goBack() {
     window.history.back()
 }
 
-const acrossWords = () => words.value.filter(w => w.direction === 'across')
-const downWords = () => words.value.filter(w => w.direction === 'down')
+// Computed property to track correctly filled cells
+const correctCells = computed(() => {
+    const cellSet = new Set()
+    if (!words.value || !userGrid.value.length) return cellSet
+
+    words.value.forEach(wordObj => {
+        let isWordCorrect = true
+        for (let i = 0; i < wordObj.word.length; i++) {
+            const r = wordObj.direction === 'down' ? wordObj.row + i : wordObj.row
+            const c =
+                wordObj.direction === 'across' ? wordObj.col + i : wordObj.col
+
+            if (
+                !userGrid.value[r] ||
+                !userGrid.value[r][c] ||
+                userGrid.value[r][c].toUpperCase() !== wordObj.word[i]
+            ) {
+                isWordCorrect = false
+                break
+            }
+        }
+
+        if (isWordCorrect) {
+            for (let i = 0; i < wordObj.word.length; i++) {
+                const r =
+                    wordObj.direction === 'down' ? wordObj.row + i : wordObj.row
+                const c =
+                    wordObj.direction === 'across'
+                        ? wordObj.col + i
+                        : wordObj.col
+                cellSet.add(`${r},${c}`)
+            }
+        }
+    })
+    return cellSet
+})
+
+// Filter and sort clues
+const acrossWords = computed(() => {
+    if (!words.value || words.value.length === 0) return []
+    return words.value
+        .filter(w => w.direction === 'across')
+        .sort((a, b) => getWordNumber(a) - getWordNumber(b))
+})
+
+const downWords = computed(() => {
+    if (!words.value || words.value.length === 0) return []
+    return words.value
+        .filter(w => w.direction === 'down')
+        .sort((a, b) => getWordNumber(a) - getWordNumber(b))
+})
 </script>
 
 <template>
@@ -194,7 +239,8 @@ const downWords = () => words.value.filter(w => w.direction === 'down')
                                     {{ getCellNumber(r, c) }}
                                 </span>
                                 <input v-model="userGrid[r][c]" :data-row="r" :data-col="c" maxlength="1"
-                                    @keydown="handleKeyDown($event, r, c)" @click="handleCellClick(r, c)" />
+                                    @keydown="handleKeyDown($event, r, c)" @click="handleCellClick(r, c)"
+                                    :class="{ 'correct-word': correctCells.has(`${r},${c}`) }" />
                             </div>
                             <div v-else class="grid-block"></div>
                         </template>
@@ -208,14 +254,14 @@ const downWords = () => words.value.filter(w => w.direction === 'down')
 
                 <div class="clues-group">
                     <h4 class="clues-subtitle">Mendatar</h4>
-                    <div v-for="(word, i) in acrossWords()" :key="i" @click="handleClueClick(word)" class="clue-item">
+                    <div v-for="(word, i) in acrossWords" :key="i" @click="handleClueClick(word)" class="clue-item">
                         {{ getWordNumber(word) }}. {{ word.clue }}
                     </div>
                 </div>
 
                 <div class="clues-group">
                     <h4 class="clues-subtitle">Menurun</h4>
-                    <div v-for="(word, i) in downWords()" :key="i" @click="handleClueClick(word)" class="clue-item">
+                    <div v-for="(word, i) in downWords" :key="i" @click="handleClueClick(word)" class="clue-item">
                         {{ getWordNumber(word) }}. {{ word.clue }}
                     </div>
                 </div>
@@ -278,7 +324,7 @@ const downWords = () => words.value.filter(w => w.direction === 'down')
     background: white;
     padding: 24px;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .puzzle-grid {
@@ -315,6 +361,12 @@ const downWords = () => words.value.filter(w => w.direction === 'down')
     background: #f7fafc;
 }
 
+.grid-cell input.correct-word {
+    background-color: #c6f6d5;
+    color: #2f855a;
+    font-weight: bold;
+}
+
 .grid-block {
     width: 40px;
     height: 40px;
@@ -334,7 +386,7 @@ const downWords = () => words.value.filter(w => w.direction === 'down')
     background: white;
     padding: 24px;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     min-width: 280px;
 }
 

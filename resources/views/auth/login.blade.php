@@ -15,11 +15,14 @@
         <div class="input-group">
             <x-input-label for="email" :value="__('Email')" />
             <div class="input-wrapper">
-                <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="16" rx="2"></rect>
                     <path d="M3 7l9 6 9-6"></path>
                 </svg>
-                <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+                <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')"
+                    required autofocus autocomplete="username" />
             </div>
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
@@ -28,14 +31,14 @@
         <div class="input-group">
             <x-input-label for="password" :value="__('Password')" />
             <div class="input-wrapper">
-                <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
-                <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+                <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required
+                    autocomplete="current-password" />
             </div>
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
@@ -167,12 +170,12 @@
             position: relative;
         }
 
-        .checkbox-input:checked ~ .checkbox-custom {
+        .checkbox-input:checked~.checkbox-custom {
             background-color: #4299e1;
             border-color: #4299e1;
         }
 
-        .checkbox-input:checked ~ .checkbox-custom::after {
+        .checkbox-input:checked~.checkbox-custom::after {
             content: "";
             position: absolute;
             left: 5px;

@@ -4,83 +4,219 @@ namespace App\Services;
 
 class CrosswordGenerator
 {
-    private $size = 15;
+    private $size;
 
     public function generate($words)
     {
-        $grid = array_fill(0, $this->size, array_fill(0, $this->size, null));
-        $placed = [];
+        // Validasi input
+        if (empty($words)) {
+            return null;
+        }
 
+        // Sort kata terpanjang dulu
         usort($words, fn($a, $b) => strlen($b['word']) <=> strlen($a['word']));
 
-        // === KATA PERTAMA DI TENGAH ===
-        $firstWord = strtoupper($words[0]['word']);
+        $this->size = $this->calculateGridSize($words);
+
+        // Inisialisasi grid
+        $grid = array_fill(0, $this->size, array_fill(0, $this->size, null));
+        $placedWords = [];
+
+        // === KATA PERTAMA ===
+        $firstWord = strtoupper(trim($words[0]['word']));
+        $firstClue = $words[0]['clue'];
+
+        if (strlen($firstWord) > $this->size) {
+            // Jika kata pertama terlalu panjang, resize grid
+            $this->size = strlen($firstWord) + 4;
+            $grid = array_fill(0, $this->size, array_fill(0, $this->size, null));
+        }
+
+        // Posisi tengah untuk kata pertama
         $row = intdiv($this->size, 2);
         $col = intdiv($this->size - strlen($firstWord), 2);
 
-        for ($i = 0; $i < strlen($firstWord); $i++) {
-            $grid[$row][$col + $i] = $firstWord[$i];
-        }
+        // Tempatkan kata pertama
+        $this->placeWord($grid, $firstWord, $row, $col, 'across');
 
-        $placed[] = [
+        $placedWords[] = [
             'word' => $firstWord,
-            'clue' => $words[0]['clue'],
+            'clue' => $firstClue,
             'row' => $row,
             'col' => $col,
-            'direction' => 'across',
-            'cells' => $this->getWordCells($row, $col, strlen($firstWord), 'across')
+            'direction' => 'across'
         ];
 
         // === KATA SELANJUTNYA ===
-        foreach (array_slice($words, 1) as $w) {
-            $word = strtoupper($w['word']);
-            $placedWord = false;
+        $failedWords = [];
 
-            foreach ($placed as $p) {
-                $pWord = $p['word'];
+        foreach (array_slice($words, 1) as $index => $wordData) {
+            $word = strtoupper(trim($wordData['word']));
+            $clue = $wordData['clue'];
 
-                for ($i = 0; $i < strlen($word); $i++) {
-                    for ($j = 0; $j < strlen($pWord); $j++) {
-                        if ($word[$i] === $pWord[$j]) {
+            if (empty($word)) {
+                continue;
+            }
 
-                            if ($p['direction'] === 'across') {
-                                $newRow = $p['row'] + $j;
-                                $newCol = $p['col'] - $i;
+            $placed = false;
+            $attempts = 0;
+            $maxAttempts = 100;
 
-                                if ($this->canPlace($grid, $word, $newRow, $newCol, 'down')) {
-                                    $this->placeWord($grid, $word, $newRow, $newCol, 'down');
+            // Acak urutan kata yang sudah ditempatkan untuk variasi
+            $shuffledPlaced = $placedWords;
+            shuffle($shuffledPlaced);
 
-                                    $placed[] = [
+            while (!$placed && $attempts < $maxAttempts) {
+                foreach ($shuffledPlaced as $placedWord) {
+                    // Cari huruf yang sama
+                    for ($i = 0; $i < strlen($word); $i++) {
+                        for ($j = 0; $j < strlen($placedWord['word']); $j++) {
+                            if ($word[$i] === $placedWord['word'][$j]) {
+                                // Tentukan posisi dan arah baru
+                                if ($placedWord['direction'] === 'across') {
+                                    $newRow = $placedWord['row'] + $j;
+                                    $newCol = $placedWord['col'] - $i;
+                                    $newDir = 'down';
+                                } else {
+                                    $newRow = $placedWord['row'] - $i;
+                                    $newCol = $placedWord['col'] + $j;
+                                    $newDir = 'across';
+                                }
+
+                                if ($this->canPlace($grid, $word, $newRow, $newCol, $newDir, $placedWord, $j)) {
+                                    $this->placeWord($grid, $word, $newRow, $newCol, $newDir);
+
+                                    $placedWords[] = [
                                         'word' => $word,
-                                        'clue' => $w['clue'],
+                                        'clue' => $clue,
                                         'row' => $newRow,
                                         'col' => $newCol,
-                                        'direction' => 'down',
-                                        'cells' => $this->getWordCells($newRow, $newCol, strlen($word), 'down')
+                                        'direction' => $newDir
                                     ];
 
-                                    $placedWord = true;
+                                    $placed = true;
                                     break 3;
                                 }
-                            } else {
-                                $newRow = $p['row'] - $i;
-                                $newCol = $p['col'] + $j;
+                            }
+                        }
+                    }
+                }
 
-                                if ($this->canPlace($grid, $word, $newRow, $newCol, 'across')) {
-                                    $this->placeWord($grid, $word, $newRow, $newCol, 'across');
+                if (!$placed) {
+                    // Coba tempatkan di posisi kosong
+                    for ($r = 0; $r < $this->size && !$placed; $r++) {
+                        for ($c = 0; $c < $this->size && !$placed; $c++) {
+                            foreach (['across', 'down'] as $dir) {
+                                if ($this->canPlace($grid, $word, $r, $c, $dir, null, null)) {
+                                    $this->placeWord($grid, $word, $r, $c, $dir);
 
-                                    $placed[] = [
+                                    $placedWords[] = [
                                         'word' => $word,
-                                        'clue' => $w['clue'],
-                                        'row' => $newRow,
-                                        'col' => $newCol,
-                                        'direction' => 'across',
-                                        'cells' => $this->getWordCells($newRow, $newCol, strlen($word), 'across')
+                                        'clue' => $clue,
+                                        'row' => $r,
+                                        'col' => $c,
+                                        'direction' => $dir
                                     ];
 
-                                    $placedWord = true;
+                                    $placed = true;
                                     break 3;
                                 }
+                            }
+                        }
+                    }
+                }
+
+                $attempts++;
+                shuffle($shuffledPlaced); // Acak lagi
+            }
+
+            if (!$placed) {
+                $failedWords[] = $word;
+            }
+        }
+
+        // Crop grid untuk menghapus baris/kolom kosong di tepi
+        $cropped = $this->cropGrid($grid);
+        $grid = $cropped['grid'];
+        $rowOffset = $cropped['rowOffset'];
+        $colOffset = $cropped['colOffset'];
+
+        // Update koordinat kata
+        foreach ($placedWords as &$word) {
+            $word['row'] -= $rowOffset;
+            $word['col'] -= $colOffset;
+        }
+
+        return [
+            'size' => ['rows' => count($grid), 'cols' => count($grid[0])],
+            'grid' => $grid,
+            'words' => $placedWords,
+            'failed' => $failedWords,
+            'success_rate' => count($placedWords) / count($words) * 100
+        ];
+    }
+
+    private function calculateGridSize($words)
+    {
+        $longest = 0;
+        $totalLength = 0;
+
+        foreach ($words as $w) {
+            $len = strlen(trim($w['word']));
+            $totalLength += $len;
+            if ($len > $longest) {
+                $longest = $len;
+            }
+        }
+
+        // Ukuran grid: minimal panjang kata terpanjang + margin
+        // atau berdasarkan total panjang semua kata
+        $baseSize = max($longest + 4, ceil(sqrt($totalLength * 1.5)));
+
+        // Pastikan ukuran ganjil agar ada titik tengah
+        return $baseSize % 2 === 0 ? $baseSize + 1 : $baseSize;
+    }
+
+    private function canPlace($grid, $word, $row, $col, $direction, $intersectWord = null, $intersectPos = null)
+    {
+        $len = strlen($word);
+
+        // Cek batas grid
+        if ($direction === 'across') {
+            if ($col < 0 || $col + $len > $this->size || $row < 0 || $row >= $this->size) {
+                return false;
+            }
+        } else {
+            if ($row < 0 || $row + $len > $this->size || $col < 0 || $col >= $this->size) {
+                return false;
+            }
+        }
+
+        // Cek setiap posisi
+        for ($i = 0; $i < $len; $i++) {
+            $r = $direction === 'across' ? $row : $row + $i;
+            $c = $direction === 'across' ? $col + $i : $col;
+
+            // Jika sel sudah terisi
+            if ($grid[$r][$c] !== null) {
+                // Dan isinya berbeda dengan huruf yang ingin ditempatkan
+                if ($grid[$r][$c] !== $word[$i]) {
+                    return false;
+                }
+                // Jika sama, itu adalah titik persilangan (OK)
+            } else {
+                // Cek sel tetangga (jangan sampai kata saling menempel)
+                $neighbors = $this->getNeighbors($r, $c, $direction, $i, $len);
+                foreach ($neighbors as $neighbor) {
+                    list($nr, $nc) = $neighbor;
+                    if ($nr >= 0 && $nr < $this->size && $nc >= 0 && $nc < $this->size) {
+                        // Jika ada huruf lain di tetangga (bukan dari kata yang sama)
+                        if ($grid[$nr][$nc] !== null) {
+                            // Dan posisi ini bukan persilangan
+                            if (!($intersectWord &&
+                                $intersectWord['row'] === $nr &&
+                                $intersectWord['col'] === $nc)) {
+                                return false;
                             }
                         }
                     }
@@ -88,47 +224,41 @@ class CrosswordGenerator
             }
         }
 
-        return [
-            'grid' => $grid,
-            'words' => $placed,
-        ];
+        return true;
     }
 
-    private function canPlace($grid, $word, $row, $col, $direction)
+    private function getNeighbors($row, $col, $direction, $position, $wordLength)
     {
-        $len = strlen($word);
+        $neighbors = [];
 
+        // Untuk across: periksa atas dan bawah
         if ($direction === 'across') {
-            if ($col < 0 || $col + $len > $this->size || $row < 0 || $row >= $this->size) return false;
-            if ($col > 0 && $grid[$row][$col - 1] !== null) return false;
-            if ($col + $len < $this->size && $grid[$row][$col + $len] !== null) return false;
-        } else {
-            if ($row < 0 || $row + $len > $this->size || $col < 0 || $col >= $this->size) return false;
-            if ($row > 0 && $grid[$row - 1][$col] !== null) return false;
-            if ($row + $len < $this->size && $grid[$row + $len][$col] !== null) return false;
+            $neighbors[] = [$row - 1, $col]; // atas
+            $neighbors[] = [$row + 1, $col]; // bawah
+            // Untuk ujung kiri
+            if ($position === 0) {
+                $neighbors[] = [$row, $col - 1];
+            }
+            // Untuk ujung kanan
+            if ($position === $wordLength - 1) {
+                $neighbors[] = [$row, $col + 1];
+            }
         }
-
-        for ($i = 0; $i < $len; $i++) {
-            $r = $direction === 'across' ? $row : $row + $i;
-            $c = $direction === 'across' ? $col + $i : $col;
-
-            $cell = $grid[$r][$c];
-            $letter = $word[$i];
-
-            if ($cell !== null && $cell !== $letter) return false;
-
-            if ($cell === null) {
-                if ($direction === 'across') {
-                    if ($r > 0 && $grid[$r - 1][$c] !== null) return false;
-                    if ($r < $this->size - 1 && $grid[$r + 1][$c] !== null) return false;
-                } else {
-                    if ($c > 0 && $grid[$r][$c - 1] !== null) return false;
-                    if ($c < $this->size - 1 && $grid[$r][$c + 1] !== null) return false;
-                }
+        // Untuk down: periksa kiri dan kanan
+        else {
+            $neighbors[] = [$row, $col - 1]; // kiri
+            $neighbors[] = [$row, $col + 1]; // kanan
+            // Untuk ujung atas
+            if ($position === 0) {
+                $neighbors[] = [$row - 1, $col];
+            }
+            // Untuk ujung bawah
+            if ($position === $wordLength - 1) {
+                $neighbors[] = [$row + 1, $col];
             }
         }
 
-        return true;
+        return $neighbors;
     }
 
     private function placeWord(&$grid, $word, $row, $col, $direction)
@@ -142,16 +272,71 @@ class CrosswordGenerator
         }
     }
 
-    private function getWordCells($row, $col, $length, $direction)
+    private function cropGrid($grid)
     {
-        $cells = [];
-        for ($i = 0; $i < $length; $i++) {
-            if ($direction === 'across') {
-                $cells[] = $row . '-' . ($col + $i);
-            } else {
-                $cells[] = ($row + $i) . '-' . $col;
+        $rows = count($grid);
+        $cols = count($grid[0]);
+
+        // Cari batas atas
+        $minRow = $rows;
+        for ($r = 0; $r < $rows; $r++) {
+            for ($c = 0; $c < $cols; $c++) {
+                if ($grid[$r][$c] !== null) {
+                    $minRow = min($minRow, $r);
+                    break;
+                }
             }
         }
-        return $cells;
+
+        // Cari batas bawah
+        $maxRow = -1;
+        for ($r = $rows - 1; $r >= 0; $r--) {
+            for ($c = 0; $c < $cols; $c++) {
+                if ($grid[$r][$c] !== null) {
+                    $maxRow = max($maxRow, $r);
+                    break;
+                }
+            }
+        }
+
+        // Cari batas kiri
+        $minCol = $cols;
+        for ($c = 0; $c < $cols; $c++) {
+            for ($r = 0; $r < $rows; $r++) {
+                if ($grid[$r][$c] !== null) {
+                    $minCol = min($minCol, $c);
+                    break;
+                }
+            }
+        }
+
+        // Cari batas kanan
+        $maxCol = -1;
+        for ($c = $cols - 1; $c >= 0; $c--) {
+            for ($r = 0; $r < $rows; $r++) {
+                if ($grid[$r][$c] !== null) {
+                    $maxCol = max($maxCol, $c);
+                    break;
+                }
+            }
+        }
+
+        // Buang area kosong
+        $newRows = $maxRow - $minRow + 1;
+        $newCols = $maxCol - $minCol + 1;
+
+        $cropped = array_fill(0, $newRows, array_fill(0, $newCols, null));
+
+        for ($r = 0; $r < $newRows; $r++) {
+            for ($c = 0; $c < $newCols; $c++) {
+                $cropped[$r][$c] = $grid[$r + $minRow][$c + $minCol];
+            }
+        }
+
+        return [
+            'grid' => $cropped,
+            'rowOffset' => $minRow,
+            'colOffset' => $minCol
+        ];
     }
 }

@@ -1,13 +1,24 @@
 <?php
 
-use App\Http\Controllers\PuzzleController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PlayerPuzzleController;
 use App\Http\Controllers\AdminPuzzleController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use Illuminate\Support\Facades\Auth;
 
+// Muat semua rute autentikasi terlebih dahulu agar namanya dikenali
+require __DIR__ . '/auth.php';
 
-// Halaman utama redirect ke login
+// Halaman utama akan mengarahkan pengguna yang sudah login ke dashboard,
+// dan pengguna tamu (guest) ke halaman login.
 Route::get('/', function () {
+    if (Auth::check()) {
+        // Asumsikan ada kolom 'is_admin' di model User Anda
+        if (Auth::user()->is_admin) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('user.dashboard');
+    }
     return view('auth.login');
 });
 
@@ -41,12 +52,3 @@ Route::middleware('auth')->group(function () {
         });
     });
 });
-
-// LOGOUT ROUTE (Terpisah untuk akses mudah)
-Route::get('/logout', function () {
-    auth()->logout();
-    return redirect()->route('login');
-})->name('logout');
-
-// AUTH ROUTES (Register, Login, Password Reset, dll)
-require __DIR__ . '/auth.php';
